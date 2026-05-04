@@ -69,12 +69,33 @@ class VectorStore:
         return len(chunks)
 
     def needs_reindex(self, chunks: List[Chunk]) -> bool:
-        """Return True if any chunk is not yet in the store."""
+        """Return True if the store doesn't exactly mirror the current chunks.
+
+        Detects both additions (new documents) and removals (deleted documents).
+        """
         if self._collection.count() == 0:
             return True
-        ids = [_chunk_id(c) for c in chunks]
-        existing = self._collection.get(ids=ids, include=[])
+        ids = set(_chunk_id(c) for c in chunks)
+        # Count mismatch catches both added and removed documents
+        if self._collection.count() != len(ids):
+            return True
+        # Same count but different content (document swap): check every ID exists
+        existing = self._collection.get(ids=list(ids), include=[])
         return len(existing["ids"]) < len(ids)
+
+    def delete_stale_chunks(self, current_chunks: List[Chunk]) -> int:
+        """Remove from the store any chunks not present in *current_chunks*.
+
+        Called after add_chunks so that vectors from deleted documents are purged.
+        Returns the number of deleted entries.
+        """
+        current_ids = {_chunk_id(c) for c in current_chunks}
+        all_ids = set(self._collection.get(include=[])["ids"])
+        stale_ids = list(all_ids - current_ids)
+        if stale_ids:
+            self._collection.delete(ids=stale_ids)
+            logger.info("Purged %d stale chunk(s) from vector store", len(stale_ids))
+        return len(stale_ids)
 
     # ------------------------------------------------------------------
     # Retrieval

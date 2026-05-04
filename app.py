@@ -60,7 +60,7 @@ with st.sidebar:
 
     if st.button("🔄 Réindexer les documents", use_container_width=True):
         with st.spinner("Réindexation en cours…"):
-            pipeline = _get_pipeline(provider_choice, force_reload=True)
+            pipeline = _get_pipeline(provider_choice, model_override, force_reload=True)
             n = pipeline.reindex()
         st.success(f"{n} chunk(s) réindexé(s).")
 
@@ -80,10 +80,9 @@ with st.sidebar:
 # Pipeline cache (one per provider+model combination)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner="Chargement du pipeline RAG…")
-def _get_pipeline(provider: str, force_reload: bool = False) -> RAGPipeline:
-    # Temporarily override config values based on UI selection
+def _get_pipeline(provider: str, model_name: str, force_reload: bool = False) -> RAGPipeline:
     cfg.AI_PROVIDER = provider
-    cfg.MODEL_NAME = model_override  # captured from outer scope via closure
+    cfg.MODEL_NAME = model_name
 
     pipeline = RAGPipeline(provider_name=provider)
     pipeline.initialize()
@@ -133,7 +132,7 @@ if question := st.chat_input("Posez votre question RH…"):
     # Load / reuse pipeline
     with st.spinner("Recherche dans les documents RH…"):
         try:
-            pipeline = _get_pipeline(provider_choice)
+            pipeline = _get_pipeline(provider_choice, model_override)
         except Exception as exc:
             st.error(f"Erreur d'initialisation du pipeline : {exc}")
             st.stop()

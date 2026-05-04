@@ -90,6 +90,7 @@ class RAGPipeline:
         if self._vector_store.needs_reindex(chunks):
             logger.info("Indexing documents into vector store …")
             self._vector_store.add_chunks(chunks)
+            self._vector_store.delete_stale_chunks(chunks)
         else:
             logger.info("Vector store up-to-date, skipping re-index.")
 
@@ -167,7 +168,9 @@ class RAGPipeline:
         """Force re-index of all documents. Returns total chunks indexed."""
         docs = load_documents(cfg.DOCUMENTS_DIR)
         chunks = split_documents(docs, cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)
-        return self._vector_store.add_chunks(chunks)
+        n = self._vector_store.add_chunks(chunks)
+        self._vector_store.delete_stale_chunks(chunks)
+        return n
 
     def provider_status(self) -> dict:
         return {
