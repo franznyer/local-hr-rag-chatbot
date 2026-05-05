@@ -70,6 +70,13 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+> **Cloud providers only** — install the relevant SDK if needed:
+> ```bash
+> pip install openai       # OpenAI
+> pip install anthropic    # Claude
+> pip install mistralai    # Mistral
+> ```
+
 ### 2 — Configure
 
 ```bash
@@ -77,12 +84,40 @@ cp .env.example .env
 # Edit .env — at minimum set AI_PROVIDER and MODEL_NAME
 ```
 
-### 3 — Add your documents
+### 3 — Pre-download the embedding model (recommended)
+
+The embedding model (`all-MiniLM-L6-v2`, ~90 MB) is downloaded from HuggingFace on first launch.
+Pre-download it while you still have internet access so the app works offline:
+
+```bash
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+```
+
+### 4 — Start your local AI
+
+**Ollama (recommended):**
+```bash
+ollama pull llama3    # one-time download (~4 GB)
+ollama serve          # keep this terminal open
+```
+
+**LM Studio:** open the app, load a model, click **Start Server** in the "Local Server" tab.
+
+### 5 — Verify your setup
+
+```bash
+python scripts/check_setup.py
+```
+
+This checks Python version, required packages, documents folder, embedding model, and provider connectivity.
+Fix any reported issues before launching.
+
+### 6 — Add your documents
 
 Drop PDF, DOCX, TXT or Markdown files into the `documents/` folder.  
 Sample HR documents (French) are already included to let you test immediately.
 
-### 4 — Launch
+### 7 — Launch
 
 ```bash
 streamlit run app.py
@@ -201,6 +236,58 @@ The `documents/` folder contains realistic French HR documents for demo purposes
 | `guide_onboarding.md` | New employee onboarding guide |
 | `politique_teletravail.md` | Remote work policy |
 | `grille_remuneration.md` | Salary grid and compensation policy |
+
+---
+
+## Troubleshooting
+
+### Ollama
+
+| Symptôme | Solution |
+|---|---|
+| `Connection refused` sur le port 11434 | Lancez `ollama serve` dans un terminal |
+| `model 'X' not found` | Lancez `ollama pull X` |
+| Réponse très lente | Modèle trop grand pour votre RAM — essayez `phi3` ou `gemma2:2b` |
+| `ollama: command not found` | Installez Ollama → https://ollama.ai |
+
+Modèles recommandés selon la RAM disponible :
+
+| RAM | Modèle suggéré | Commande |
+|---|---|---|
+| 4 GB | Phi-3 Mini | `ollama pull phi3:mini` |
+| 8 GB | Llama 3.1 8B | `ollama pull llama3.1` |
+| 16 GB | Mistral 7B | `ollama pull mistral` |
+| 32 GB+ | Llama 3.1 70B Q4 | `ollama pull llama3.1:70b` |
+
+### LM Studio
+
+| Symptôme | Solution |
+|---|---|
+| `Connection refused` sur le port 1234 | Ouvrez LM Studio → onglet "Local Server" → **Start** |
+| Aucun modèle chargé | Chargez un modèle GGUF dans LM Studio avant de démarrer le serveur |
+| Port différent | Modifiez `LMSTUDIO_BASE_URL` dans `.env` |
+
+### Providers cloud (OpenAI / Claude / Mistral)
+
+| Symptôme | Solution |
+|---|---|
+| `AuthenticationError` | Vérifiez la clé API dans `.env` |
+| SDK non trouvé | `pip install openai` / `pip install anthropic` / `pip install mistralai` |
+
+### Embedding model
+
+| Symptôme | Solution |
+|---|---|
+| Erreur au chargement du modèle | Vérifiez votre connexion internet (premier téléchargement) |
+| Lenteur sur CPU | Normal — le modèle tourne entièrement en local sans GPU |
+
+### Documents
+
+| Symptôme | Solution |
+|---|---|
+| "Aucun document trouvé" | Placez des fichiers `.pdf`, `.docx`, `.txt` ou `.md` dans `/documents` |
+| PDF vide | Certains PDF sont des images — OCR non supporté nativement |
+| Réponse hors-sujet | Cliquez "Réindexer" dans la sidebar après avoir ajouté des documents |
 
 ---
 

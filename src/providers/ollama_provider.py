@@ -29,6 +29,22 @@ class OllamaProvider(BaseProvider):
                 json=payload,
                 timeout=120,
             )
+
+            # Detect model-not-found before raising generically
+            if resp.status_code == 404:
+                body = resp.json()
+                raw_error = body.get("error", "")
+                if "not found" in raw_error.lower() or "try pulling" in raw_error.lower():
+                    return ProviderResponse(
+                        content="",
+                        model=self.model_name,
+                        provider=self.provider_name,
+                        error=(
+                            f"Modèle '{self.model_name}' introuvable dans Ollama. "
+                            f"Lancez : ollama pull {self.model_name}"
+                        ),
+                    )
+
             resp.raise_for_status()
             data = resp.json()
             return ProviderResponse(
@@ -39,6 +55,17 @@ class OllamaProvider(BaseProvider):
                     "prompt_eval_count": data.get("prompt_eval_count", 0),
                     "eval_count": data.get("eval_count", 0),
                 },
+            )
+
+        except requests.exceptions.ConnectionError:
+            return ProviderResponse(
+                content="",
+                model=self.model_name,
+                provider=self.provider_name,
+                error=(
+                    f"Impossible de joindre Ollama sur {self._base_url}. "
+                    "Vérifiez qu'il est lancé : ollama serve"
+                ),
             )
         except Exception as exc:
             logger.error("Ollama error: %s", exc)
@@ -53,3 +80,12 @@ class OllamaProvider(BaseProvider):
             return resp.status_code == 200
         except Exception:
             return False
+
+    def list_local_models(self) -> List[str]:
+        """Return names of models already pulled in Ollama."""
+        try:
+            resp = requests.get(f"{self._base_url}/api/tags", timeout=5)
+            resp.raise_for_status()
+            return [m["name"] for m in resp.json().get("models", [])]
+        except Exception:
+            return []
