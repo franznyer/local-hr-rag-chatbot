@@ -1,310 +1,406 @@
-# Local HR RAG Chatbot 💼
+<div align="center">
 
-> A fully local, privacy-first HR chatbot powered by Retrieval-Augmented Generation (RAG).  
-> Ask questions about your HR documents — answers are grounded exclusively in your files.
+# 💼 Local HR RAG Chatbot
+
+### Posez des questions sur vos documents RH — en local, privé, sans connexion requise
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange?style=for-the-badge)](https://www.trychroma.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Local First](https://img.shields.io/badge/Mode-100%25_Local-blueviolet?style=for-the-badge)](https://ollama.ai/)
+
+**Déposez vos documents RH → Posez vos questions → Obtenez des réponses sourcées**
+
+*Aucune donnée ne quitte votre machine. Aucun abonnement. Aucune clé API requise.*
+
+</div>
 
 ---
 
-## Overview
+## 🎯 À quoi ça sert ?
 
-**Local HR RAG Chatbot** is a production-grade RAG application that lets HR teams (or any employee) query internal HR documents through a conversational interface — without sending a single byte of data to a third-party server.
+Imaginez un assistant RH disponible 24h/24, capable de répondre instantanément à des questions comme :
 
-| Feature | Detail |
+> *"Combien de jours de congés ai-je droit après un mariage ?"*
+> *"Quelles sont les règles du télétravail dans l'entreprise ?"*
+> *"Comment fonctionne la période d'essai pour un CDI cadre ?"*
+
+…en citant toujours la source exacte dans vos propres documents. **Sans jamais inventer.**
+
+| ✅ Ce qu'il fait | ❌ Ce qu'il ne fait pas |
 |---|---|
-| 100% local mode | Ollama or LM Studio — no internet required |
-| Document support | PDF, DOCX, TXT, Markdown |
-| Embeddings | `sentence-transformers` (local) |
-| Vector database | ChromaDB (persisted on disk) |
-| UI | Streamlit |
-| AI providers | OpenAI, Claude, Mistral, Ollama, LM Studio |
-| Anti-hallucination | Strict prompt — refuses to answer if information is absent |
+| Répond depuis VOS documents | Inventer des informations |
+| Cite la source de chaque réponse | Envoyer vos données sur internet |
+| Fonctionne 100% hors ligne | Accéder à des sources externes |
+| Supporte PDF, DOCX, TXT, Markdown | Remplacer un juriste RH |
 
 ---
 
-## Architecture
+## 🧠 Comment ça marche ? (RAG en 3 étapes)
 
+> **RAG = Retrieval-Augmented Generation** — une technique d'IA qui force le modèle à répondre *uniquement* depuis vos documents.
+
+```mermaid
+flowchart LR
+    A[📄 Vos documents\nPDF · DOCX · TXT · MD] --> B[✂️ Découpage\nen chunks]
+    B --> C[🔢 Embeddings\nlocaux]
+    C --> D[(🗄️ ChromaDB\nVecteur store)]
+
+    E[💬 Votre question] --> F[🔍 Recherche\npar similarité]
+    D --> F
+    F --> G[📝 Prompt\ncontextualisé]
+    G --> H[🤖 Modèle IA\nOllama · OpenAI · Claude…]
+    H --> I[✅ Réponse\n+ sources citées]
 ```
-local-hr-rag-chatbot/
-│
-├── app.py                    # Streamlit UI + entry point
-├── requirements.txt
-├── .env.example
-│
-├── documents/                # Drop your HR documents here
-├── vectorstore/              # ChromaDB persisted index (auto-created)
-│
-└── src/
-    ├── config.py             # Centralised configuration (env vars)
-    ├── document_loader.py    # PDF / DOCX / TXT / MD ingestion
-    ├── text_splitter.py      # Overlapping chunking
-    ├── embeddings.py         # sentence-transformers wrapper
-    ├── vector_store.py       # ChromaDB CRUD + similarity search
-    ├── rag_pipeline.py       # Full RAG orchestration
-    ├── prompts.py            # Strict HR prompt templates
-    │
-    └── providers/
-        ├── base.py           # Abstract BaseProvider interface
-        ├── openai_provider.py
-        ├── claude_provider.py
-        ├── mistral_provider.py
-        ├── ollama_provider.py
-        └── lmstudio_provider.py
-```
+
+**Étape 1 — Indexation** : Vos documents sont découpés en petits extraits, convertis en vecteurs mathématiques et stockés localement.
+
+**Étape 2 — Recherche** : Quand vous posez une question, le système cherche les extraits les plus pertinents dans la base vectorielle.
+
+**Étape 3 — Génération** : Le modèle IA reçoit uniquement ces extraits comme contexte et génère une réponse sourcée. Il ne peut pas inventer.
 
 ---
 
-## Quick Start
+## 🚀 Démarrage en 5 minutes
 
-### Prerequisites
+### Prérequis
 
-- Python 3.10+
-- (For local mode) [Ollama](https://ollama.ai) or [LM Studio](https://lmstudio.ai) running locally
+Avant de commencer, vérifiez que vous avez :
 
-### 1 — Clone and install
+- [ ] **Python 3.10+** — [télécharger ici](https://www.python.org/downloads/)
+- [ ] **Git** — [télécharger ici](https://git-scm.com/)
+- [ ] **Ollama** (recommandé pour le mode local) — [télécharger ici](https://ollama.ai/)
+
+<details>
+<summary>💡 Comment vérifier ma version de Python ?</summary>
+
+```bash
+python --version
+# ou
+python3 --version
+```
+
+Si vous voyez `Python 3.10.x` ou supérieur, vous êtes prêt.
+
+</details>
+
+---
+
+### Étape 1 — Cloner le projet
 
 ```bash
 git clone https://github.com/franznyer/local-hr-rag-chatbot.git
 cd local-hr-rag-chatbot
+```
+
+### Étape 2 — Créer un environnement virtuel
+
+```bash
+# Créer l'environnement
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# L'activer (macOS / Linux)
+source .venv/bin/activate
+
+# L'activer (Windows)
+.venv\Scripts\activate
+```
+
+> 💡 Votre terminal doit afficher `(.venv)` au début de la ligne. C'est bon signe !
+
+### Étape 3 — Installer les dépendances
+
+```bash
 pip install -r requirements.txt
 ```
 
-> **Cloud providers only** — install the relevant SDK if needed:
-> ```bash
-> pip install openai       # OpenAI
-> pip install anthropic    # Claude
-> pip install mistralai    # Mistral
-> ```
+> ⏳ Cette étape prend 2–5 minutes (téléchargement des librairies). C'est normal.
 
-### 2 — Configure
+### Étape 4 — Configurer
 
 ```bash
 cp .env.example .env
-# Edit .env — at minimum set AI_PROVIDER and MODEL_NAME
 ```
 
-### 3 — Pre-download the embedding model (recommended)
+Ouvrez le fichier `.env` dans votre éditeur et vérifiez que ces lignes correspondent à votre setup :
 
-The embedding model (`all-MiniLM-L6-v2`, ~90 MB) is downloaded from HuggingFace on first launch.
-Pre-download it while you still have internet access so the app works offline:
+```env
+AI_PROVIDER=ollama    # ou lmstudio, openai, claude, mistral
+MODEL_NAME=llama3     # nom du modèle que vous utilisez
+```
+
+### Étape 5 — Lancer Ollama avec un modèle
 
 ```bash
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Télécharger un modèle (une seule fois, ~4 Go)
+ollama pull llama3
+
+# Lancer le serveur Ollama (gardez ce terminal ouvert)
+ollama serve
 ```
 
-### 4 — Start your local AI
+<details>
+<summary>📊 Quel modèle choisir selon ma RAM ?</summary>
 
-**Ollama (recommended):**
-```bash
-ollama pull llama3    # one-time download (~4 GB)
-ollama serve          # keep this terminal open
-```
+| RAM disponible | Modèle recommandé | Commande |
+|---|---|---|
+| 4 Go | Phi-3 Mini (rapide) | `ollama pull phi3:mini` |
+| 8 Go | Llama 3.1 8B | `ollama pull llama3.1` |
+| 16 Go | Mistral 7B | `ollama pull mistral` |
+| 32 Go+ | Llama 3.1 70B Q4 | `ollama pull llama3.1:70b` |
 
-**LM Studio:** open the app, load a model, click **Start Server** in the "Local Server" tab.
+</details>
 
-### 5 — Verify your setup
+### Étape 6 — Vérifier l'installation
 
 ```bash
 python scripts/check_setup.py
 ```
 
-This checks Python version, required packages, documents folder, embedding model, and provider connectivity.
-Fix any reported issues before launching.
+Vous devriez voir tous les éléments en vert ✓. Si ce n'est pas le cas, suivez les instructions affichées.
 
-### 6 — Add your documents
-
-Drop PDF, DOCX, TXT or Markdown files into the `documents/` folder.  
-Sample HR documents (French) are already included to let you test immediately.
-
-### 7 — Launch
+### Étape 7 — Lancer l'application
 
 ```bash
 streamlit run app.py
 ```
 
-The app opens at `http://localhost:8501`.  
-Documents are indexed automatically on first launch.
+L'application s'ouvre automatiquement sur **http://localhost:8501** 🎉
 
 ---
 
-## Supported AI Providers
+## 🔌 Providers IA supportés
 
-| Provider | Mode | Requirement |
-|---|---|---|
-| **Ollama** | 100% local | `ollama serve` + model pulled |
-| **LM Studio** | 100% local | LM Studio server running |
-| **OpenAI** | Cloud | `OPENAI_API_KEY` in `.env` |
-| **Claude** | Cloud | `ANTHROPIC_API_KEY` in `.env` |
-| **Mistral** | Cloud | `MISTRAL_API_KEY` in `.env` |
+Vous pouvez brancher n'importe quel fournisseur IA sans changer le code — juste en modifiant `.env`.
 
-### Using Ollama (recommended for privacy)
+| Provider | Mode | Confidentialité | Prérequis |
+|---|---|---|---|
+| 🦙 **Ollama** | 100% local | ⭐⭐⭐ Maximale | `ollama serve` + modèle pullé |
+| 🎬 **LM Studio** | 100% local | ⭐⭐⭐ Maximale | Serveur local démarré |
+| 🟢 **OpenAI** | Cloud | ⭐ Données envoyées | Clé API `OPENAI_API_KEY` |
+| 🟠 **Claude** | Cloud | ⭐ Données envoyées | Clé API `ANTHROPIC_API_KEY` |
+| 🔵 **Mistral** | Cloud | ⭐⭐ Hébergé en EU | Clé API `MISTRAL_API_KEY` |
 
-```bash
-# Install Ollama: https://ollama.ai
-ollama pull llama3          # or mistral, phi3, gemma2, etc.
-ollama serve
-```
+<details>
+<summary>⚙️ Configuration pour LM Studio</summary>
 
-Set in `.env`:
-```
-AI_PROVIDER=ollama
-MODEL_NAME=llama3
-```
+1. Téléchargez [LM Studio](https://lmstudio.ai/)
+2. Chargez un modèle GGUF dans la bibliothèque
+3. Allez dans l'onglet **"Local Server"** et cliquez **Start**
+4. Dans `.env` :
 
-### Using LM Studio
-
-1. Download and open [LM Studio](https://lmstudio.ai)
-2. Load any GGUF model
-3. Start the local server (default port: 1234)
-
-Set in `.env`:
-```
+```env
 AI_PROVIDER=lmstudio
 MODEL_NAME=lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
+LMSTUDIO_BASE_URL=http://localhost:1234/v1
 ```
+
+</details>
+
+<details>
+<summary>⚙️ Configuration pour OpenAI</summary>
+
+```bash
+pip install openai
+```
+
+Dans `.env` :
+
+```env
+AI_PROVIDER=openai
+MODEL_NAME=gpt-4o
+OPENAI_API_KEY=sk-...votre-clé...
+```
+
+</details>
+
+<details>
+<summary>⚙️ Configuration pour Claude (Anthropic)</summary>
+
+```bash
+pip install anthropic
+```
+
+Dans `.env` :
+
+```env
+AI_PROVIDER=claude
+MODEL_NAME=claude-sonnet-4-6
+ANTHROPIC_API_KEY=sk-ant-...votre-clé...
+```
+
+</details>
 
 ---
 
-## Configuration Reference
+## 📂 Ajouter vos propres documents
 
-All settings are controlled via `.env`:
+Déposez vos fichiers dans le dossier `documents/` :
 
-| Variable | Default | Description |
+```
+documents/
+├── reglement_interieur.pdf
+├── politique_conges.docx
+├── accord_teletravail.pdf
+└── guide_onboarding.md
+```
+
+**Formats supportés :** PDF · DOCX · TXT · Markdown
+
+Au prochain lancement (ou en cliquant **🔄 Réindexer** dans la sidebar), vos documents seront automatiquement analysés et indexés.
+
+> 🔒 **Vos documents ne quittent jamais votre machine.** L'indexation se fait entièrement en local.
+
+---
+
+## 🏗️ Architecture du projet
+
+```
+local-hr-rag-chatbot/
+│
+├── 📱 app.py                    # Interface Streamlit (point d'entrée)
+├── 📋 requirements.txt          # Dépendances Python
+├── ⚙️  .env.example              # Modèle de configuration
+├── 🔍 scripts/check_setup.py   # Script de diagnostic
+│
+├── 📁 documents/                # ← Vos documents RH ici
+├── 🗄️  vectorstore/              # Base vectorielle (générée automatiquement)
+│
+└── 📦 src/
+    ├── config.py                # Configuration centralisée
+    ├── document_loader.py       # Lecture PDF/DOCX/TXT/MD
+    ├── text_splitter.py         # Découpage en chunks
+    ├── embeddings.py            # Modèle d'embedding local
+    ├── vector_store.py          # Interface ChromaDB
+    ├── rag_pipeline.py          # Orchestration RAG
+    ├── prompts.py               # Prompt anti-hallucination
+    │
+    └── providers/               # Abstraction fournisseurs IA
+        ├── base.py              # Interface commune (ABC)
+        ├── ollama_provider.py
+        ├── lmstudio_provider.py
+        ├── openai_provider.py
+        ├── claude_provider.py
+        └── mistral_provider.py
+```
+
+### Ajouter un nouveau provider
+
+```python
+# src/providers/mon_provider.py
+from src.providers.base import BaseProvider, Message, ProviderResponse
+
+class MonProvider(BaseProvider):
+    provider_name = "mon_provider"
+
+    def complete(self, messages, **kwargs) -> ProviderResponse:
+        # Votre logique ici
+        ...
+
+    def health_check(self) -> bool:
+        # Vérifier que le service répond
+        ...
+```
+
+Ensuite, enregistrez-le dans `src/rag_pipeline.py` → `_build_provider()` et ajoutez l'option dans `app.py`.
+
+---
+
+## ⚙️ Configuration complète (`.env`)
+
+| Variable | Défaut | Description |
 |---|---|---|
-| `AI_PROVIDER` | `ollama` | Active provider |
-| `MODEL_NAME` | `llama3` | Model identifier |
-| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Local embedding model |
-| `CHUNK_SIZE` | `512` | Words per chunk |
-| `CHUNK_OVERLAP` | `64` | Overlap between chunks |
-| `TOP_K_RESULTS` | `4` | Chunks retrieved per query |
-| `MIN_RELEVANCE_SCORE` | `0.3` | Minimum cosine similarity |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama endpoint |
-| `LMSTUDIO_BASE_URL` | `http://localhost:1234/v1` | LM Studio endpoint |
+| `AI_PROVIDER` | `ollama` | Fournisseur actif |
+| `MODEL_NAME` | `llama3` | Nom du modèle |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Modèle d'embedding local (~90 Mo) |
+| `CHUNK_SIZE` | `512` | Taille des chunks (en mots) |
+| `CHUNK_OVERLAP` | `64` | Chevauchement entre chunks |
+| `TOP_K_RESULTS` | `4` | Nombre de chunks récupérés par requête |
+| `MIN_RELEVANCE_SCORE` | `0.3` | Score de similarité minimum (0 à 1) |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Endpoint Ollama |
+| `LMSTUDIO_BASE_URL` | `http://localhost:1234/v1` | Endpoint LM Studio |
 
 ---
 
-## RAG Pipeline
+## 🐛 Dépannage
 
-```
-User question
-     │
-     ▼
-Embed query (sentence-transformers, local)
-     │
-     ▼
-Similarity search (ChromaDB, cosine)
-     │
-     ▼
-Top-K chunks retrieved
-     │
-     ▼
-Build structured prompt (strict anti-hallucination template)
-     │
-     ▼
-AI Provider (Ollama / OpenAI / Claude / Mistral / LM Studio)
-     │
-     ▼
-Structured answer + cited sources + confidence score
-```
+<details>
+<summary>🦙 Problèmes avec Ollama</summary>
 
-### Anti-hallucination strategy
-
-- The system prompt **forbids** the model from inventing information.
-- If the answer is not found in the retrieved chunks, the model replies with a standard refusal message.
-- Every factual statement must be followed by a source citation in parentheses.
-
----
-
-## Adding a New Provider
-
-1. Create `src/providers/my_provider.py`
-2. Inherit from `BaseProvider` and implement `complete()` and `health_check()`
-3. Register the new key in `src/rag_pipeline.py` → `_build_provider()`
-4. Add the new option to the Streamlit sidebar in `app.py`
-
----
-
-## Sample Documents (included)
-
-The `documents/` folder contains realistic French HR documents for demo purposes:
-
-| File | Content |
+| Erreur | Solution |
 |---|---|
-| `politique_conges.md` | Leave and absence policy |
-| `reglement_interieur.md` | Company internal rules |
-| `guide_onboarding.md` | New employee onboarding guide |
-| `politique_teletravail.md` | Remote work policy |
-| `grille_remuneration.md` | Salary grid and compensation policy |
-
----
-
-## Troubleshooting
-
-### Ollama
-
-| Symptôme | Solution |
-|---|---|
-| `Connection refused` sur le port 11434 | Lancez `ollama serve` dans un terminal |
+| `Connection refused` | Lancez `ollama serve` dans un terminal |
 | `model 'X' not found` | Lancez `ollama pull X` |
-| Réponse très lente | Modèle trop grand pour votre RAM — essayez `phi3` ou `gemma2:2b` |
-| `ollama: command not found` | Installez Ollama → https://ollama.ai |
+| Réponse très lente | Modèle trop grand — essayez `phi3:mini` |
+| `ollama: command not found` | [Installez Ollama](https://ollama.ai) |
 
-Modèles recommandés selon la RAM disponible :
+</details>
 
-| RAM | Modèle suggéré | Commande |
-|---|---|---|
-| 4 GB | Phi-3 Mini | `ollama pull phi3:mini` |
-| 8 GB | Llama 3.1 8B | `ollama pull llama3.1` |
-| 16 GB | Mistral 7B | `ollama pull mistral` |
-| 32 GB+ | Llama 3.1 70B Q4 | `ollama pull llama3.1:70b` |
+<details>
+<summary>🎬 Problèmes avec LM Studio</summary>
 
-### LM Studio
-
-| Symptôme | Solution |
+| Erreur | Solution |
 |---|---|
-| `Connection refused` sur le port 1234 | Ouvrez LM Studio → onglet "Local Server" → **Start** |
-| Aucun modèle chargé | Chargez un modèle GGUF dans LM Studio avant de démarrer le serveur |
+| `Connection refused` | Ouvrez LM Studio → "Local Server" → **Start** |
+| Pas de modèle chargé | Chargez un modèle GGUF avant de démarrer le serveur |
 | Port différent | Modifiez `LMSTUDIO_BASE_URL` dans `.env` |
 
-### Providers cloud (OpenAI / Claude / Mistral)
+</details>
+
+<details>
+<summary>☁️ Problèmes avec les providers cloud</summary>
+
+| Erreur | Solution |
+|---|---|
+| `AuthenticationError` | Vérifiez votre clé API dans `.env` |
+| `ModuleNotFoundError` | `pip install openai` / `pip install anthropic` / `pip install mistralai` |
+
+</details>
+
+<details>
+<summary>📄 Problèmes avec les documents</summary>
 
 | Symptôme | Solution |
 |---|---|
-| `AuthenticationError` | Vérifiez la clé API dans `.env` |
-| SDK non trouvé | `pip install openai` / `pip install anthropic` / `pip install mistralai` |
+| "Aucun document trouvé" | Vérifiez que des fichiers sont dans `/documents` |
+| PDF sans réponse | Certains PDF sont des images scannées (OCR non supporté) |
+| Réponse hors-sujet | Cliquez **🔄 Réindexer** dans la sidebar |
 
-### Embedding model
-
-| Symptôme | Solution |
-|---|---|
-| Erreur au chargement du modèle | Vérifiez votre connexion internet (premier téléchargement) |
-| Lenteur sur CPU | Normal — le modèle tourne entièrement en local sans GPU |
-
-### Documents
-
-| Symptôme | Solution |
-|---|---|
-| "Aucun document trouvé" | Placez des fichiers `.pdf`, `.docx`, `.txt` ou `.md` dans `/documents` |
-| PDF vide | Certains PDF sont des images — OCR non supporté nativement |
-| Réponse hors-sujet | Cliquez "Réindexer" dans la sidebar après avoir ajouté des documents |
+</details>
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-- [ ] PDF upload via UI
-- [ ] Multi-language support
-- [ ] LLM-based re-ranking
-- [ ] Docker / Docker Compose packaging
-- [ ] REST API layer for SaaS deployment
-
----
-
-## License
-
-MIT
+- [x] Pipeline RAG complet (ingestion, embedding, retrieval, génération)
+- [x] Support multi-provider (Ollama, LM Studio, OpenAI, Claude, Mistral)
+- [x] Interface Streamlit avec sources et indice de confiance
+- [x] Détection automatique des nouveaux documents
+- [ ] Upload de documents directement dans l'UI
+- [ ] Packaging Docker (une commande pour tout démarrer)
+- [ ] Support multilingue
+- [ ] API REST pour intégration SaaS
+- [ ] Re-ranking LLM des résultats
 
 ---
 
-*Built with Python · ChromaDB · sentence-transformers · Streamlit*
+## 🤝 Contribuer
+
+Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour commencer.
+
+---
+
+## 📄 Licence
+
+Ce projet est sous licence [MIT](LICENSE) — libre d'utilisation, modification et distribution.
+
+---
+
+<div align="center">
+
+**Construit avec** Python · ChromaDB · sentence-transformers · Streamlit
+
+*Si ce projet vous a été utile, ⭐ une étoile sur GitHub fait toujours plaisir !*
+
+</div>
