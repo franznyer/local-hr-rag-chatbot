@@ -76,8 +76,6 @@ Avant de commencer, vérifiez que vous avez :
 <summary>💡 Comment vérifier ma version de Python ?</summary>
 
 ```bash
-python --version
-# ou
 python3 --version
 ```
 
@@ -94,11 +92,21 @@ git clone https://github.com/franznyer/local-hr-rag-chatbot.git
 cd local-hr-rag-chatbot
 ```
 
-### Étape 2 — Créer un environnement virtuel
+### Étapes 2 & 3 — Environnement virtuel + dépendances
+
+#### Option A — Script automatique (recommandé, macOS & Linux)
+
+```bash
+bash setup.sh
+```
+
+Ce script crée le venv, règle le problème Homebrew macOS, et installe toutes les dépendances en une seule commande.
+
+#### Option B — Étapes manuelles
 
 ```bash
 # Créer l'environnement
-python -m venv .venv
+python3 -m venv .venv
 
 # L'activer (macOS / Linux)
 source .venv/bin/activate
@@ -109,10 +117,9 @@ source .venv/bin/activate
 
 > 💡 Votre terminal doit afficher `(.venv)` au début de la ligne. C'est bon signe !
 
-### Étape 3 — Installer les dépendances
-
 ```bash
-pip install -r requirements.txt
+# Installer les dépendances via python -m pip (évite les problèmes Homebrew)
+python -m pip install -r requirements.txt
 ```
 
 > ⏳ Cette étape prend 2–5 minutes (téléchargement des librairies). C'est normal.
@@ -324,6 +331,32 @@ Ensuite, enregistrez-le dans `src/rag_pipeline.py` → `_build_provider()` et aj
 ---
 
 ## 🐛 Dépannage
+
+<details>
+<summary>🍺 Erreur "externally-managed-environment" sur macOS (Homebrew)</summary>
+
+Cette erreur apparaît quand Python est installé via Homebrew. Même après `source .venv/bin/activate`, pip peut la déclencher.
+
+**Solution rapide :**
+
+```bash
+# Utilisez le script fourni (recommandé)
+bash setup.sh
+```
+
+**Ou manuellement :**
+
+```bash
+python3 -m venv .venv
+# Supprimer le marqueur Homebrew dans le venv (sans danger)
+find .venv/lib -name "EXTERNALLY-MANAGED" -delete
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+**Pourquoi ?** Homebrew propage un fichier `EXTERNALLY-MANAGED` dans les venvs qu'il crée. Sa suppression est sans risque : elle n'affecte que ce venv isolé, pas votre installation Python système.
+
+</details>
 
 <details>
 <summary>🦙 Problèmes avec Ollama</summary>
