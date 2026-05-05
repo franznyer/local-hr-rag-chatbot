@@ -29,5 +29,5 @@ vectorstore/*/
 .DS_Store
 Thumbs.db
 
-# Streamlit cache
-.streamlit/
+# Streamlit — ignorer les secrets mais pas la config du thème
+.streamlit/secrets.toml
