@@ -27,12 +27,9 @@ if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]; }
 fi
 echo "✓  Python $PY_VERSION détecté"
 
-# ── 2. Créer ou réutiliser le venv ─────────────────────────
+# ── 2. Créer le venv si absent ─────────────────────────────
 VENV_PYTHON=".venv/bin/python"
-if [ -f "$VENV_PYTHON" ] && "$VENV_PYTHON" -c "import streamlit" 2>/dev/null; then
-  echo "✓  Environnement virtuel .venv déjà installé — réutilisation"
-  SKIP_INSTALL=1
-else
+if [ ! -f "$VENV_PYTHON" ]; then
   echo "→  Création de l'environnement virtuel .venv …"
   "$PYTHON" -m venv .venv
 
@@ -40,16 +37,16 @@ else
   # Sans danger : ne concerne que ce venv isolé, pas Python système.
   find .venv/lib -name "EXTERNALLY-MANAGED" -delete 2>/dev/null && \
     echo "✓  Marqueur EXTERNALLY-MANAGED supprimé (macOS Homebrew)" || true
-
-  SKIP_INSTALL=0
+else
+  echo "✓  Environnement virtuel .venv existant — mise à jour des dépendances"
 fi
 
-# ── 3. Installer les dépendances ───────────────────────────
-if [ "$SKIP_INSTALL" = "0" ]; then
-  echo "→  Installation des dépendances (2–5 min) …"
-  .venv/bin/python -m pip install --upgrade pip --quiet
-  .venv/bin/python -m pip install -r requirements.txt
-fi
+# ── 3. Installer / mettre à jour les dépendances ───────────
+# Toujours exécuté : garantit que toutes les dépendances de requirements.txt
+# sont présentes, même après un ajout ou une installation partielle.
+echo "→  Vérification des dépendances …"
+.venv/bin/python -m pip install --upgrade pip --quiet
+.venv/bin/python -m pip install -r requirements.txt --quiet
 
 # ── 4. Copier .env si absent ───────────────────────────────
 if [ ! -f .env ]; then
@@ -72,8 +69,8 @@ else
   MODEL=$(grep -E '^MODEL_NAME=' .env 2>/dev/null | cut -d= -f2 | tr -d ' "' || echo "llama3")
   MODEL=${MODEL:-llama3}
 
-  # Vérifier si le modèle est déjà disponible
-  if ollama list 2>/dev/null | grep -q "^${MODEL%%:*}"; then
+  # Vérifier si le modèle exact est déjà disponible (tag inclus)
+  if ollama list 2>/dev/null | awk '{print $1}' | grep -qxF "$MODEL"; then
     echo "✓  Modèle '$MODEL' déjà téléchargé"
   else
     echo "→  Téléchargement du modèle '$MODEL' (peut prendre plusieurs minutes) …"
