@@ -37,6 +37,14 @@ if command -v ollama &>/dev/null; then
   else
     echo "✓  Serveur Ollama déjà actif"
   fi
+
+  # Vérifier que le modèle configuré est disponible
+  MODEL=$(grep -E '^MODEL_NAME=' .env 2>/dev/null | cut -d= -f2 | tr -d ' "')
+  MODEL=${MODEL:-llama3.2}
+  if ! ollama list 2>/dev/null | awk '{print $1}' | grep -qxF "$MODEL"; then
+    echo "→  Modèle '$MODEL' non trouvé — téléchargement…"
+    ollama pull "$MODEL" || echo "⚠️   Échec. Relancez : ollama pull $MODEL"
+  fi
 fi
 
 # ── 4. Ouvrir le navigateur après 2 secondes ─────────────────
