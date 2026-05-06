@@ -18,6 +18,22 @@
 
 ---
 
+## ⚡ Lancement rapide (après installation)
+
+> Vous avez déjà installé l'app ? Un double-clic suffit pour relancer.
+
+| Système | Fichier à double-cliquer | Ou en terminal |
+|---|---|---|
+| **macOS** | `run.command` | `bash run.command` |
+| **Linux** | `run.sh` | `bash run.sh` |
+| **Windows** | `run.bat` | double-clic |
+
+Le script s'occupe de tout : vérifier le venv, démarrer Ollama, ouvrir le navigateur, lancer l'app.
+
+> **Premier lancement ?** Le script installe l'environnement automatiquement — même comportement que `bash setup.sh`.
+
+---
+
 ## 🎯 À quoi ça sert ?
 
 Imaginez un assistant RH disponible 24h/24, capable de répondre instantanément à des questions comme :
