@@ -27,7 +27,7 @@ CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "hr_documents")
 
 # AI Provider
 AI_PROVIDER = os.getenv("AI_PROVIDER", "ollama").lower()
-MODEL_NAME = os.getenv("MODEL_NAME", "llama3")
+MODEL_NAME = os.getenv("MODEL_NAME", "llama3.2")
 
 # Provider API keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

@@ -66,21 +66,32 @@ if ! command -v ollama &>/dev/null; then
   echo "⚠️   Ollama non installé. Téléchargez-le sur https://ollama.ai"
 else
   # Déterminer le modèle configuré dans .env
-  MODEL=$(grep -E '^MODEL_NAME=' .env 2>/dev/null | cut -d= -f2 | tr -d ' "' || echo "llama3")
-  MODEL=${MODEL:-llama3}
+  # Déterminer le modèle configuré dans .env (défaut : llama3.2)
+  MODEL=$(grep -E '^MODEL_NAME=' .env 2>/dev/null | cut -d= -f2 | tr -d ' "' || echo "llama3.2")
+  MODEL=${MODEL:-llama3.2}
+  FALLBACK="llama3.2"
 
   # Vérifier si le modèle exact est déjà disponible (tag inclus)
   if ollama list 2>/dev/null | awk '{print $1}' | grep -qxF "$MODEL"; then
     echo "✓  Modèle '$MODEL' déjà téléchargé"
   else
-    echo "→  Téléchargement du modèle '$MODEL' (peut prendre plusieurs minutes) …"
-    echo "   Si le téléchargement échoue, relancez : ollama pull $MODEL"
-    echo "   Ollama reprend automatiquement là où il s'est arrêté."
-    ollama pull "$MODEL" || {
+    echo "→  Téléchargement du modèle '$MODEL' …"
+    echo "   Ollama reprend automatiquement si la connexion est coupée."
+    if ! ollama pull "$MODEL"; then
       echo ""
-      echo "⚠️   Téléchargement interrompu. Relancez : ollama pull $MODEL"
-      echo "   Modèle alternatif plus léger : ollama pull llama3.2"
-    }
+      echo "⚠️   Échec du téléchargement de '$MODEL'."
+      if [ "$MODEL" != "$FALLBACK" ]; then
+        echo "→  Tentative avec le modèle de secours '$FALLBACK' (2 Go)…"
+        if ollama pull "$FALLBACK"; then
+          sed -i.bak "s/^MODEL_NAME=.*/MODEL_NAME=$FALLBACK/" .env && rm -f .env.bak
+          echo "✓  Modèle '$FALLBACK' téléchargé — .env mis à jour."
+        else
+          echo "⚠️   Relancez manuellement : ollama pull $FALLBACK"
+        fi
+      else
+        echo "   Relancez : ollama pull $FALLBACK  (reprend là où ça s'est arrêté)"
+      fi
+    fi
   fi
 
   # Vérifier si le serveur Ollama tourne
