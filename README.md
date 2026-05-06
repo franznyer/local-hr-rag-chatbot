@@ -94,35 +94,36 @@ cd local-hr-rag-chatbot
 
 ### Étapes 2 & 3 — Environnement virtuel + dépendances
 
-#### Option A — Script automatique (recommandé, macOS & Linux)
-
 ```bash
 bash setup.sh
 ```
 
-Ce script crée le venv, règle le problème Homebrew macOS, et installe toutes les dépendances en une seule commande.
+Ce script crée le venv, règle automatiquement le problème Homebrew macOS, installe les dépendances, et vérifie Ollama. Si le venv existe déjà, il le réutilise sans tout réinstaller.
 
-#### Option B — Étapes manuelles
+> ⏳ La première exécution prend 2–5 minutes. C'est normal.
+
+<details>
+<summary>🪟 Windows ou installation manuelle</summary>
 
 ```bash
-# Créer l'environnement
 python3 -m venv .venv
+```
 
-# L'activer (macOS / Linux)
+macOS / Linux :
+```bash
 source .venv/bin/activate
+```
 
-# L'activer (Windows)
+Windows :
+```bash
 .venv\Scripts\activate
 ```
 
-> 💡 Votre terminal doit afficher `(.venv)` au début de la ligne. C'est bon signe !
-
 ```bash
-# Installer les dépendances via python -m pip (évite les problèmes Homebrew)
 python -m pip install -r requirements.txt
 ```
 
-> ⏳ Cette étape prend 2–5 minutes (téléchargement des librairies). C'est normal.
+</details>
 
 ### Étape 4 — Configurer
 
@@ -137,27 +138,39 @@ AI_PROVIDER=ollama    # ou lmstudio, openai, claude, mistral
 MODEL_NAME=llama3     # nom du modèle que vous utilisez
 ```
 
-### Étape 5 — Lancer Ollama avec un modèle
+### Étape 5 — Télécharger un modèle Ollama
+
+`setup.sh` s'en charge automatiquement. Si vous le faites manuellement, lancez **une seule** de ces commandes selon votre RAM disponible :
+
+| RAM disponible | Commande | Taille |
+|---|---|---|
+| 4 Go | `ollama pull llama3.2` | ~2 Go |
+| 8 Go | `ollama pull llama3.1` | ~4.7 Go |
+| 16 Go | `ollama pull mistral` | ~4.1 Go |
+| 32 Go+ | `ollama pull llama3.1:70b` | ~40 Go |
 
 ```bash
-# Télécharger un modèle (une seule fois, ~4 Go)
-ollama pull llama3
+ollama pull llama3.2
+```
 
-# Lancer le serveur Ollama (gardez ce terminal ouvert)
+> Si le téléchargement est interrompu (`Error: EOF`), relancez la même commande — Ollama reprend là où il s'est arrêté.
+
+Puis dans `.env`, indiquez le modèle choisi :
+
+```env
+MODEL_NAME=llama3.2
+```
+
+**Démarrer le serveur Ollama :**
+
+- Si vous utilisez l'**app Ollama Desktop**, elle démarre le serveur automatiquement — vous n'avez rien à faire.
+- Sinon, dans un terminal séparé :
+
+```bash
 ollama serve
 ```
 
-<details>
-<summary>📊 Quel modèle choisir selon ma RAM ?</summary>
-
-| RAM disponible | Modèle recommandé | Commande |
-|---|---|---|
-| 4 Go | Phi-3 Mini (rapide) | `ollama pull phi3:mini` |
-| 8 Go | Llama 3.1 8B | `ollama pull llama3.1` |
-| 16 Go | Mistral 7B | `ollama pull mistral` |
-| 32 Go+ | Llama 3.1 70B Q4 | `ollama pull llama3.1:70b` |
-
-</details>
+> Si vous voyez `address already in use`, c'est que le serveur tourne déjà. C'est normal.
 
 ### Étape 6 — Vérifier l'installation
 
@@ -363,9 +376,11 @@ python -m pip install -r requirements.txt
 
 | Erreur | Solution |
 |---|---|
-| `Connection refused` | Lancez `ollama serve` dans un terminal |
+| `Connection refused` | Ouvrez l'app Ollama Desktop, ou lancez `ollama serve` |
+| `address already in use` | Serveur déjà actif — pas de problème, continuez |
 | `model 'X' not found` | Lancez `ollama pull X` |
-| Réponse très lente | Modèle trop grand — essayez `phi3:mini` |
+| `Error: EOF` pendant le pull | Connexion interrompue — relancez `ollama pull X`, le téléchargement reprend |
+| Réponse très lente | Modèle trop grand pour votre RAM — essayez `ollama pull llama3.2` |
 | `ollama: command not found` | [Installez Ollama](https://ollama.ai) |
 
 </details>
